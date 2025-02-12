@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Atomic Unit Converter</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+    <script>
+        var unit_energy = {
+            "H":1.0, "eV":0.036749322175655, "kJ/mol":3.80879884713e-4, "kcal/mol":0.00159360143764, 
+            "J":2.2937122783969e17,
+            "K":3.166811563e-6, "cm-1":4.5563352570e-6, "ghz":1.51982984606e-7
+        };
+
+        var fwd_energy = {"B": ((v)=>Math.log(v)*298.15/-3.1577709E+05), 
+                        "nm":((v)=>45.563355809/v), "fs":((v)=>2/41.3413733352/v) }
+        var bkwd_energy = {"B":((v)=>Math.exp(v*-3.1577709E+05/298.15))  }
+
+        var unit_length = {
+            "au":1.0, "A":1.8897259886, "pm":1.8897259886e-2, "nm":1.8897259886e+1
+        }
+
+        var unit_time = {
+            "au":1.0, "fs":41.3413733352, "ps":41.3413733352e+3, "ns":41.3413733352e+6
+        }
+
+        var unit_efield = {
+            "au":1.0, "V/A":unit_energy["eV"]/unit_length["A"],
+            "V/nm":unit_energy["eV"]/unit_length["nm"]
+        }
+
+        var fwd_efield = {
+            "W/cm2":((v)=>5.33802715535e-09*Math.sqrt(v)),
+            "MW/cm2":((v)=>5.33802715535e-06*Math.sqrt(v)),
+            "1020/cm2/s":((v)=>3.700808415576e-08*Math.sqrt(v)),
+            "eV/nm2/fs":((v)=>0.000675672083405*Math.sqrt(v)),
+            "1/nm2/fs":((v)=>0.00117029837771*Math.sqrt(v)),
+        }
+
+        var bkwd_efield = {
+            "W/cm2":((v)=>(v/5.33802715535e-09)**2),
+            "MW/cm2":((v)=>(v/5.33802715535e-06)**2),
+            "1020/cm2/s":((v)=>(v/3.700808415576e-08)**2),
+            "eV/nm2/fs":((v)=>(v/0.000675672083405)**2),
+            "1/nm2/fs":((v)=>(v/0.00117029837771)**2),
+        }
+
+        var unit_velocity = {
+            "eV":unit_energy["eV"], "K":unit_energy["K"]
+        }
+
+        var fwd_velocity = {
+            "ve_au":((v)=>0.5*v**2),
+            "vh_au":((v)=>0.5*1836*v**2),
+            "vh_bohr/ps":((v)=>5.371219272e-07*v**2),
+            "mh_au":((v)=>v**2/2/1836),
+            "vo_au":((v)=>0.5*29152*v**2),
+            "vo_bohr/ps":((v)=>8.528419619e-06*v**2),
+            "mo_au":((v)=>v**2/2/29152)
+        }
+
+        var bkwd_velocity = {
+            "ve_au":((v)=>Math.sqrt(2*v)),
+            "vh_bohr/ps":((v)=>Math.sqrt(v/5.371219272e-07)),
+            "vh_au":((v)=>Math.sqrt(2*v/1836)),
+            "mh_au":((v)=>Math.sqrt(2*v*1836)),
+            "vo_au":((v)=>Math.sqrt(2*v/29152)),
+            "vo_bohr/ps":((v)=>Math.sqrt(v/8.528419619e-06)),
+            "mo_au":((v)=>Math.sqrt(2*v*29152))
+        }
+
+        var unit_bfield = {
+            "au":1.0, "T": 1/235051.75722, "Gauss":1e-4/235051.75722
+        }
+
+        function convert(form, field, unit, fwd_conv={}, bkwd_conv={}) {
+            var myinput = form.elements[field];
+
+            // find number of characters in input string for significant figure functions
+            var nchars = myinput.value.indexOf('.') > -1 ? myinput.value.length : myinput.value.length+1 ;
+            nchars = Math.min(nchars, 10);
+
+            var val;
+
+            // for linear unit, we just do a multiplication
+            if (field in unit) {
+                val = myinput.value * unit[field];
+            }
+            // otherwise we call the function
+            else {
+                val = fwd_conv[field](myinput.value);
+            }
+
+            // convert to other units. Again for linear ones we just do the division
+            for (const [key, conv] of Object.entries(unit)) {
+                if (key !== field) {
+                    form.elements[key].value = trunc(val / conv, nchars);
+                }
+            }
+
+            for (const [key, fconv] of Object.entries(fwd_conv)) {
+                if (key !== field) {
+                    // call the backward converter
+                    if (key in bkwd_conv) {
+                        form.elements[key].value = trunc(bkwd_conv[key](val), nchars);
+                    }
+                    // For inversions, the foward and backward are the same function, so we call the foward one instead
+                    else {
+                        form.elements[key].value = trunc(fconv(val), nchars);
+                    }
+                }
+            }
+        }
+
+        function convert_length(form, field) {
+            convert(form, field, unit_length);
+        }
+
+        function convert_time(form, field) {
+            convert(form, field, unit_time);
+        }
+        
+        function convert_energy(form, field) {
+            convert(form, field, unit_energy, fwd_energy, bkwd_energy);
+        }
+
+        function convert_efield(form, field) {
+            convert(form, field, unit_efield, fwd_efield, bkwd_efield);
+        }
+
+        function convert_velocity(form, field) {
+            convert(form, field, unit_velocity, fwd_velocity, bkwd_velocity);
+        }
+
+        function convert_bfield(form, field) {
+            convert(form, field, unit_bfield);
+        }
+        
+        function trunc(x,n) {
+            return x.toPrecision(n);
+        }
+        </script>
+</head>
+<body>
+    <div class="container border-bottom">
+        <header class="d-flex justify-content-center py-3">
+            <span class="align-items-center link-body-emphasis d-flex mr-3 fs-2">Atomic Unit Converter</span>
+        </header>
+        <ul class="nav nav-pills mb-3 d-flex justify-content-center text-black">
+            <li class="nav-item"><a class="nav-link link-body-emphasis" href="#form_energy" aria-current="page">Energy</a></li>
+            <li class="nav-item"><a class="nav-link link-body-emphasis" href="#form_time" >Time</a></li>
+            <li class="nav-item"><a class="nav-link link-body-emphasis" href="#form_length" >Length</a></li>
+            <li class="nav-item"><a class="nav-link link-body-emphasis" href="#form_efield" >Electric Field</a></li>
+            <li class="nav-item"><a class="nav-link link-body-emphasis" href="#form_velocity" >Velocity</a></li>
+            <li class="nav-item"><a class="nav-link link-body-emphasis" href="#form_bfield" >Magnetic Field</a></li>
+        </ul>
+    </div>
+    <div class="container-sm" style="width:50%">
+        <a name="form_energy"></a>
+        <header class="d-flex py-3 fs-4">Energy</header>
+        <FORM id="energy" METHOD=POST class="form-inline">
+            <div class="input-group mb-2">
+                <INPUT class="form-control" TYPE="text" NAME="H" VALUE=0 onChange="convert_energy(this.form,this.name);">
+                <span class="input-group-text">Hartrees</span>
+            </div>
+            <div class="input-group mb-2">
+                <INPUT class="form-control" TYPE="text" NAME="eV" VALUE=0 onChange="convert_energy(this.form,this.name);">
+                <span class="input-group-text">eV</span>
+            </div>
+            <div class="input-group mb-2">
+                <INPUT class="form-control" TYPE="text" NAME="kJ/mol" VALUE=0 onChange="convert_energy(this.form,this.name);">
+                <span class="input-group-text">kJ/mol</span>
+            </div>
+            <div class="input-group mb-2">
+                <INPUT class="form-control" TYPE="text" NAME="kcal/mol" VALUE=0 onChange="convert_energy(this.form,this.name);">
+                <span class="input-group-text">kcal/mol</span>
+            </div>
+            <div class="input-group mb-2">
+                <INPUT class="form-control" TYPE="text" NAME="cm-1" VALUE=0 onChange="convert_energy(this.form,this.name);">
+                <span class="input-group-text">cm^-1</span>
+            </div>
+            <div class="input-group mb-2">
+                <INPUT class="form-control" TYPE="text" NAME="J" VALUE=0 onChange="convert_energy(this.form,this.name);">
+                <span class="input-group-text">Joule</span>
+            </div>
+            <div class="input-group mb-2">
+                <INPUT class="form-control" TYPE="text" NAME="nm" VALUE=0 onChange="convert_energy(this.form,this.name);">
+                <span class="input-group-text">Light wavelength in nm</span>
+            </div>
+            <div class="input-group mb-2">
+                <INPUT class="form-control" TYPE="text" NAME="ghz" VALUE=0 onChange="convert_energy(this.form,this.name);">
+                <span class="input-group-text">Light frequency in GHz</span>
+            </div>
+            <div class=" mb-2">
+            <div class="input-group">
+                <INPUT class="form-control" TYPE="text" NAME="fs" VALUE=0 onChange="convert_energy(this.form,this.name);">
+                <span class="input-group-text">FWHM-mapped lifetime in fs</span>
+            </div>
+            Lifetime * FWHM = 2hbar
+            </div>
+            <div class="input-group mb-2">
+                <INPUT class="form-control" TYPE="text" NAME="K" VALUE=0 onChange="convert_energy(this.form,this.name);">
+                <span class="input-group-text">Kelvin</span>
+            </div>
+            <div class="input-group mb-2">
+                <INPUT class="form-control" TYPE="text" NAME="B" VALUE=0 onChange="convert_energy(this.form,this.name);">
+                <span class="input-group-text">Boltzman population ratio at 298.15K</span>
+            </div>
+        </FORM>
+    </div>
+
+    <div class="container-sm" style="width:50%">
+        <a name="form_time"></a>
+        <header class="d-flex py-3 fs-4">Time</header>
+        <FORM id="time" METHOD=POST class="form-inline">
+            <div class="input-group mb-2">
+                <INPUT class="form-control" TYPE="text" NAME="au" VALUE=0 onChange="convert_time(this.form,this.name);">
+                <span class="input-group-text">au</span>
+            </div>
+            <div class="input-group mb-2">
+                <INPUT class="form-control" TYPE="text" NAME="fs" VALUE=0 onChange="convert_time(this.form,this.name);">
+                <span class="input-group-text">fs</span>
+            </div>
+            <div class="input-group mb-2">
+                <INPUT class="form-control" TYPE="text" NAME="ps" VALUE=0 onChange="convert_time(this.form,this.name);">
+                <span class="input-group-text">ps</span>
+            </div>
+            <div class="input-group mb-2">
+                <INPUT class="form-control" TYPE="text" NAME="ns" VALUE=0 onChange="convert_time(this.form,this.name);">
+                <span class="input-group-text">ns</span>
+            </div>
+        </FORM>
+    </div>
+
+    <div class="container-sm" style="width:50%">
+        <a name="form_length"></a>
+        <header class="d-flex py-3 fs-4">Length</header>
+        <FORM id="length" METHOD=POST class="form-inline">
+            <div class="input-group mb-2">
+                <INPUT class="form-control" TYPE="text" NAME="au" VALUE=0 onChange="convert_length(this.form,this.name);">
+                <span class="input-group-text">au</span>
+            </div>
+            <div class="input-group mb-2">
+                <INPUT class="form-control" TYPE="text" NAME="A" VALUE=0 onChange="convert_length(this.form,this.name);">
+                <span class="input-group-text">Angstrom</span>
+            </div>
+            <div class="input-group mb-2">
+                <INPUT class="form-control" TYPE="text" NAME="nm" VALUE=0 onChange="convert_length(this.form,this.name);">
+                <span class="input-group-text">nm</span>
+            </div>
+            <div class="input-group mb-2">
+                <INPUT class="form-control" TYPE="text" NAME="pm" VALUE=0 onChange="convert_length(this.form,this.name);">
+                <span class="input-group-text">pm</span>
+            </div>
+        </FORM>
+    </div>
+
+    <div class="container-sm" style="width:50%">
+        <a name="form_efield"></a>
+        <header class="d-flex py-3 fs-4">Electric Field</header>
+        <FORM id="length" METHOD=POST class="form-inline">
+            <div class="input-group mb-2">
+                <INPUT class="form-control" TYPE="text" NAME="au" VALUE=0 onChange="convert_efield(this.form,this.name);">
+                <span class="input-group-text">au</span>
+            </div>
+            <div class="input-group mb-2">
+                <INPUT class="form-control" TYPE="text" NAME="V/A" VALUE=0 onChange="convert_efield(this.form,this.name);">
+                <span class="input-group-text">V/Angstrom</span>
+            </div>
+            <div class="input-group mb-2">
+                <INPUT class="form-control" TYPE="text" NAME="V/nm" VALUE=0 onChange="convert_efield(this.form,this.name);">
+                <span class="input-group-text">V/nm</span>
+            </div>
+            <div class="mb-2">
+            <div class="input-group">
+                <INPUT class="form-control col-md-8" TYPE="text" NAME="W/cm2" VALUE=0 onChange="convert_efield(this.form,this.name);">
+                <span class="input-group-text">Light power flux in W/cm^2</span>
+            </div>
+            <div>Typical sunlight power = 1.4 W/cm2</div>
+            </div>
+            <div class="input-group mb-2">
+                <INPUT class="form-control" TYPE="text" NAME="MW/cm2" VALUE=0 onChange="convert_efield(this.form,this.name);">
+                <span class="input-group-text">Light power flux in MW/cm^2</span>
+            </div>
+            <div class="input-group mb-2">
+                <INPUT class="form-control" TYPE="text" NAME="eV/nm2/fs" VALUE=0 onChange="convert_efield(this.form,this.name);">
+                <span class="input-group-text">Light power flux in eV/nm^2/fs</span>
+            </div>
+            <div class="input-group mb-2">
+                <INPUT class="form-control" TYPE="text" NAME="1020/cm2/s" VALUE=0 onChange="convert_efield(this.form,this.name);">
+                <span class="input-group-text">Photon flux (3eV) in 10^20/cm^2/s</span>
+            </div>
+            <div class="input-group mb-2">
+                <INPUT class="form-control" TYPE="text" NAME="1/nm2/fs" VALUE=0 onChange="convert_efield(this.form,this.name);">
+                <span class="input-group-text">Photon flux (3eV) in 1/nm^2/fs</span>
+            </div>
+        </FORM>
+    </div>
+
+    <div class="container-sm" style="width:50%">
+        <a name="form_velocity"></a>
+        <header class="d-flex py-3 fs-4">Velocity</header>
+        <FORM id="length" METHOD=POST class="form-inline">
+            <div class="input-group mb-2">
+                <INPUT class="form-control" TYPE="text" NAME="eV" VALUE=0 onChange="convert_velocity(this.form,this.name);">
+                <span class="input-group-text">eV</span>
+            </div>
+            <div class="input-group mb-2">
+                <INPUT class="form-control" TYPE="text" NAME="K" VALUE=0 onChange="convert_velocity(this.form,this.name);">
+                <span class="input-group-text">K</span>
+            </div>
+            <div class="input-group mb-2">
+                <INPUT class="form-control" TYPE="text" NAME="ve_au" VALUE=0 onChange="convert_velocity(this.form,this.name);">
+                <span class="input-group-text">Thermal velocity along 1 DOF (M=1) in au</span>
+            </div>
+            <div class="input-group mb-2">
+                <INPUT class="form-control" TYPE="text" NAME="vh_au" VALUE=0 onChange="convert_velocity(this.form,this.name);">
+                <span class="input-group-text">Thermal velocity along 1 DOF (M=1836) in au</span>
+            </div>
+            <div class="input-group mb-2">
+                <INPUT class="form-control" TYPE="text" NAME="vh_bohr/ps" VALUE=0 onChange="convert_velocity(this.form,this.name);">
+                <span class="input-group-text">Thermal velocity along 1 DOF (M=1836 au) in Bohr/ps</span>
+            </div>
+            <div class="input-group mb-2">
+                <INPUT class="form-control" TYPE="text" NAME="mh_au" VALUE=0 onChange="convert_velocity(this.form,this.name);">
+                <span class="input-group-text">Thermal momentum along 1 DOF (M=1836 au) in au</span>
+            </div>
+            <div class="input-group mb-2">
+                <INPUT class="form-control" TYPE="text" NAME="vo_au" VALUE=0 onChange="convert_velocity(this.form,this.name);">
+                <span class="input-group-text">Thermal velocity along 1 DOF (M=29152 au) in au</span>
+            </div>
+            <div class="input-group mb-2">
+                <INPUT class="form-control" TYPE="text" NAME="vo_bohr/ps" VALUE=0 onChange="convert_velocity(this.form,this.name);">
+                <span class="input-group-text">Thermal velocity along 1 DOF (M=29152 au) in Bohr/ps</span>
+            </div>
+            <div class="input-group mb-2">
+                <INPUT class="form-control" TYPE="text" NAME="mo_au" VALUE=0 onChange="convert_velocity(this.form,this.name);">
+                <span class="input-group-text">Thermal momentum along 1 DOF (M=29152 au) in au</span>
+            </div>
+        </FORM>
+    </div>
+
+    <div class="container-sm" style="width:50%">
+        <a name="form_bfield"></a>
+        <header class="d-flex py-3 fs-4">Magnetic Field</header>
+        <FORM id="length" METHOD=POST class="form-inline">
+            <div class="mb-2">
+            <div class="input-group">
+                <INPUT class="form-control" TYPE="text" NAME="au" VALUE=0 onChange="convert_bfield(this.form,this.name);">
+                <span class="input-group-text">au</span>
+            </div>
+            Defined as e*hbar*B/(m_e) = E_h (SI units)
+            </div>
+            <div class="input-group mb-2">
+                <INPUT class="form-control" TYPE="text" NAME="T" VALUE=0 onChange="convert_bfield(this.form,this.name);">
+                <span class="input-group-text">Tesla</span>
+            </div>
+            <div class="mb-2">
+            <div class="input-group">
+                <INPUT class="form-control" TYPE="text" NAME="Gauss" VALUE=0 onChange="convert_bfield(this.form,this.name);">
+                <span class="input-group-text">Gauss</span>
+            </div>
+            Earth magnetic field = 0.25-0.65 Gauss
+            </div>
+        </FORM>
+    </div>
+    <div class="contianer-sm mt-3 mb-3"></div>
+</body>
+
+</html>
