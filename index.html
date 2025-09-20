@@ -11,7 +11,7 @@
         };
 
         var fwd_energy = {"B": ((v)=>Math.log(v)*298.15/-3.1577709E+05), 
-                        "nm":((v)=>45.563355809/v), "fs":((v)=>2/41.3413733352/v) }
+                        "nm":((v)=>45.563355809/v), "fs":((v)=>2/41.3413733352/v), "fs2":((v)=>1/41.3413733352/v) }
         var bkwd_energy = {"B":((v)=>Math.exp(v*-3.1577709E+05/298.15))  }
 
         var unit_length = {
@@ -49,6 +49,7 @@
 
         var fwd_velocity = {
             "ve_au":((v)=>0.5*v**2),
+            "ve_m/s":((v)=>0.5*(v*4.571028575364e-07)**2),
             "vh_au":((v)=>0.5*1836*v**2),
             "vh_bohr/ps":((v)=>5.371219272e-07*v**2),
             "mh_au":((v)=>v**2/2/1836),
@@ -59,6 +60,7 @@
 
         var bkwd_velocity = {
             "ve_au":((v)=>Math.sqrt(2*v)),
+            "ve_m/s":((v)=>Math.sqrt(2*v)/4.571028575364e-07),
             "vh_bohr/ps":((v)=>Math.sqrt(v/5.371219272e-07)),
             "vh_au":((v)=>Math.sqrt(2*v/1836)),
             "mh_au":((v)=>Math.sqrt(2*v*1836)),
@@ -191,6 +193,13 @@
             </div>
             <div class=" mb-2">
             <div class="input-group">
+                <INPUT class="form-control" TYPE="text" NAME="fs2" VALUE=0 onChange="convert_energy(this.form,this.name);">
+                <span class="input-group-text">Lifetime in fs</span>
+            </div>
+            Lifetime * Energy = 1hbar
+            </div>
+            <div class=" mb-2">
+            <div class="input-group">
                 <INPUT class="form-control" TYPE="text" NAME="fs" VALUE=0 onChange="convert_energy(this.form,this.name);">
                 <span class="input-group-text">FWHM-mapped lifetime in fs</span>
             </div>
@@ -310,6 +319,10 @@
             <div class="input-group mb-2">
                 <INPUT class="form-control" TYPE="text" NAME="ve_au" VALUE=0 onChange="convert_velocity(this.form,this.name);">
                 <span class="input-group-text">Thermal velocity along 1 DOF (M=1) in au</span>
+            </div>
+            <div class="input-group mb-2">
+                <INPUT class="form-control" TYPE="text" NAME="ve_m/s" VALUE=0 onChange="convert_velocity(this.form,this.name);">
+                <span class="input-group-text">Thermal velocity along 1 DOF (M=1) in m/s</span>
             </div>
             <div class="input-group mb-2">
                 <INPUT class="form-control" TYPE="text" NAME="vh_au" VALUE=0 onChange="convert_velocity(this.form,this.name);">
