@@ -22,6 +22,11 @@
             "au":1.0, "fs":41.3413733352, "ps":41.3413733352e+3, "ns":41.3413733352e+6
         }
 
+        var unit_mass = {
+            "au":1.0, "amu":1822.888486209, "kg": 1.0977691042e30, "g": 1.0977691042e27, 
+            "au_eng": 5.3251354448e-05, "MeV":1.956951180888371
+        }
+
         var unit_efield = {
             "au":1.0, "V/A":unit_energy["eV"]/unit_length["A"],
             "V/nm":unit_energy["eV"]/unit_length["nm"]
@@ -119,6 +124,10 @@
         function convert_time(form, field) {
             convert(form, field, unit_time);
         }
+
+        function convert_mass(form, field) {
+            convert(form, field, unit_mass);
+        }
         
         function convert_energy(form, field) {
             convert(form, field, unit_energy, fwd_energy, bkwd_energy);
@@ -150,6 +159,7 @@
             <li class="nav-item"><a class="nav-link link-body-emphasis" href="#form_energy" aria-current="page">Energy</a></li>
             <li class="nav-item"><a class="nav-link link-body-emphasis" href="#form_time" >Time</a></li>
             <li class="nav-item"><a class="nav-link link-body-emphasis" href="#form_length" >Length</a></li>
+            <li class="nav-item"><a class="nav-link link-body-emphasis" href="#form_mass" >Mass</a></li>
             <li class="nav-item"><a class="nav-link link-body-emphasis" href="#form_efield" >Electric Field</a></li>
             <li class="nav-item"><a class="nav-link link-body-emphasis" href="#form_velocity" >Velocity</a></li>
             <li class="nav-item"><a class="nav-link link-body-emphasis" href="#form_bfield" >Magnetic Field</a></li>
@@ -258,6 +268,37 @@
             <div class="input-group mb-2">
                 <INPUT class="form-control" TYPE="text" NAME="pm" VALUE=0 onChange="convert_length(this.form,this.name);">
                 <span class="input-group-text">pm</span>
+            </div>
+        </FORM>
+    </div>
+
+    <div class="container-sm" style="width:50%">
+        <a name="form_mass"></a>
+        <header class="d-flex py-3 fs-4">Mass</header>
+        <FORM id="length" METHOD=POST class="form-inline">
+            <div class="input-group mb-2">
+                <INPUT class="form-control" TYPE="text" NAME="au" VALUE=0 onChange="convert_mass(this.form,this.name);">
+                <span class="input-group-text">au</span>
+            </div>
+            <div class="input-group mb-2">
+                <INPUT class="form-control" TYPE="text" NAME="amu" VALUE=0 onChange="convert_mass(this.form,this.name);">
+                <span class="input-group-text">amu</span>
+            </div>
+            <div class="input-group mb-2">
+                <INPUT class="form-control" TYPE="text" NAME="kg" VALUE=0 onChange="convert_mass(this.form,this.name);">
+                <span class="input-group-text">kg</span>
+            </div>
+            <div class="input-group mb-2">
+                <INPUT class="form-control" TYPE="text" NAME="g" VALUE=0 onChange="convert_mass(this.form,this.name);">
+                <span class="input-group-text">g</span>
+            </div>
+            <div class="input-group mb-2">
+                <INPUT class="form-control" TYPE="text" NAME="au_eng" VALUE=0 onChange="convert_mass(this.form,this.name);">
+                <span class="input-group-text">au(energy)</span>
+            </div>
+            <div class="input-group mb-2">
+                <INPUT class="form-control" TYPE="text" NAME="MeV" VALUE=0 onChange="convert_mass(this.form,this.name);">
+                <span class="input-group-text">MeV</span>
             </div>
         </FORM>
     </div>
